@@ -1,5 +1,6 @@
 package com.ercan.clients.RickAndMortyClient.pojo;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
@@ -16,7 +17,7 @@ public class Result {
     private String type;
     private String gender;
     private Origin origin;
-    //@JsonIgnoreProperties(value = {"name"})
+    @JsonIgnoreProperties(value = {"id"})
     private Location location;
     private String image;
     private List<String> episode;
