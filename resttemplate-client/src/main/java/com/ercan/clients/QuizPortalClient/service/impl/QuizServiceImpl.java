@@ -11,9 +11,11 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Arrays;
-import java.util.List;
+import java.net.URI;
+import java.util.*;
 
 @Service
 public class QuizServiceImpl implements QuizService {
@@ -62,7 +64,8 @@ public class QuizServiceImpl implements QuizService {
             HttpEntity<String> entity = new HttpEntity<>(getJwtHttpHeaders());
             // Use Token to get Response
             ResponseEntity<List<Quiz>> response = restTemplate.exchange(QUIZ_PORTAL_API_URL + "/all",
-                    HttpMethod.GET, entity, new ParameterizedTypeReference<List<Quiz>>() {});
+                    HttpMethod.GET, entity, new ParameterizedTypeReference<List<Quiz>>() {
+                    });
             return response.getBody();
 
         } catch (Exception ex) {
@@ -72,12 +75,48 @@ public class QuizServiceImpl implements QuizService {
     }
 
     @Override
+    public Quiz getQuizByTitle(String title) {
+        try {
+            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(QUIZ_PORTAL_API_URL);
+            URI uri = uriComponentsBuilder.queryParam("title", title).build().toUri();
+            HttpEntity<String> entity = new HttpEntity<>(getJwtHttpHeaders());
+            ResponseEntity<Quiz> response = restTemplate.exchange(uri, HttpMethod.GET, entity, Quiz.class);
+            return response.getBody();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
     public Quiz save(Quiz quiz) {
         try {
-            HttpEntity<Quiz> entity = new HttpEntity<>(quiz,getJwtHttpHeaders());
-            ResponseEntity<Quiz> response = restTemplate.exchange(QUIZ_PORTAL_API_URL+"/save",HttpMethod.POST,entity,Quiz.class);
+            HttpEntity<Quiz> entity = new HttpEntity<>(quiz, getJwtHttpHeaders());
+            ResponseEntity<Quiz> response = restTemplate.exchange(QUIZ_PORTAL_API_URL + "/save", HttpMethod.POST, entity, Quiz.class);
             return response.getBody();
-        }catch (Exception ex){
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public List<Quiz> getQuizByCategoryIdAndTitles(Long categoryId, Set<String> titles) {
+        try {
+            Map<String, Long> uriParams = new HashMap<>();
+            uriParams.put("categoryId", categoryId);
+
+            UriComponents builder = UriComponentsBuilder.fromHttpUrl(QUIZ_PORTAL_API_URL + "/by-category/{categoryId}")
+                    .queryParam("title", titles)
+                    .queryParam("recordStatus", 1)
+                    .build();
+
+            HttpEntity<String> entity = new HttpEntity<>(getJwtHttpHeaders());
+            ResponseEntity<List<Quiz>> response = restTemplate.exchange(builder.toUriString(), HttpMethod.GET,
+                    entity,new ParameterizedTypeReference<List<Quiz>>() {}, uriParams);
+            return response.getBody();
+
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         return null;
